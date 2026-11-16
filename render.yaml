@@ -1,0 +1,1 @@
+services:\n  - type: web\n    name: 510k\n    env: node\n    plan: free\n    buildCommand: node -e "console.log('buildless worker')"\n    startCommand: node work/preview-server.mjs\n    autoDeploy: true\n
