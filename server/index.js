@@ -1,21 +1,27 @@
 import http from 'node:http';
 import worker from '../worker/index.js';
 
-const port = Number(process.env.PORT || 10000);
+const port = Number(process.env.PORT || 3000);
 const server = http.createServer(async (req, res) => {
   try {
-    const chunks = [];
-    for await (const chunk of req) chunks.push(chunk);
-    const body = chunks.length ? Buffer.concat(chunks) : undefined;
+    if (req.url === '/health' && req.method === 'GET') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ ok: true }));
+      return;
+    }
+    let data = '';
+    for await (const chunk of req) data += chunk;
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
-    const request = new Request(url, { method: req.method, headers: req.headers, body: body && body.length ? body : undefined });
-    const response = await worker.fetch(request, {});
+    const headers = {};
+    for (const [key, value] of Object.entries(req.headers)) if (typeof value === 'string') headers[key] = value;
+    const init = { method: req.method, headers };
+    if (data) { init.body = data; init.duplex = 'half'; }
+    const response = await worker.fetch(new Request(url, init), {});
     res.statusCode = response.status;
     response.headers.forEach((value, key) => res.setHeader(key, value));
     res.end(Buffer.from(await response.arrayBuffer()));
   } catch (error) {
-    res.statusCode = 500;
-    res.setHeader('content-type', 'application/json');
+    res.writeHead(500, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ error: error.message }));
   }
 });
