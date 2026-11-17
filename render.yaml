@@ -1,8 +1,13 @@
 services:
   - type: web
     name: 510k
-    env: node
+    runtime: node
     plan: free
-    buildCommand: npm install
-    startCommand: npm start
-    autoDeploy: true
+    region: singapore
+    buildCommand: node --check server/index.js
+    startCommand: node server/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+
