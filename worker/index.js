@@ -18,3 +18,4 @@ async function fetcher(request,env){const u=new URL(request.url);if(u.pathname==
 export default {fetch:fetcher};
 
 
+
